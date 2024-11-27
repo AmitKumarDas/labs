@@ -1,0 +1,47 @@
+# ----
+# What: Verify fetch derivations via nix flake
+# Refer: https://github.com/nix-systems/nix-systems
+# Status: DONE
+# ----
+
+# Command under test
+exec nix flake show $PWD --json --all-systems
+
+# Verify
+cp stdout got_stdout.json
+exec bash -c 'cat got_stdout.json | jq . > got_stdout.jq'
+cmp got_stdout.jq want_stdout.jq
+
+-- want_stdout.jq --
+{
+  "packages": {
+    "aarch64-darwin": {
+      "hello": {
+        "description": "A program that produces a familiar, friendly greeting",
+        "name": "hello-2.12.1",
+        "type": "derivation"
+      }
+    },
+    "aarch64-linux": {
+      "hello": {
+        "description": "A program that produces a familiar, friendly greeting",
+        "name": "hello-2.12.1",
+        "type": "derivation"
+      }
+    },
+    "x86_64-darwin": {
+      "hello": {
+        "description": "A program that produces a familiar, friendly greeting",
+        "name": "hello-2.12.1",
+        "type": "derivation"
+      }
+    },
+    "x86_64-linux": {
+      "hello": {
+        "description": "A program that produces a familiar, friendly greeting",
+        "name": "hello-2.12.1",
+        "type": "derivation"
+      }
+    }
+  }
+}
