@@ -1,0 +1,44 @@
+# ---
+# Motivation: Reproduce https://nixos.wiki/wiki/Shell_Scripts
+# Status: REPRODUCED
+# ---
+
+exec nix-build
+stdout -count=1 '/nix/store/zxcqxvparaydxlj68g9v4xv25fln6c7b-output.txt'
+
+exec ls -ltra
+stdout -count=1 'result -> /nix/store/zxcqxvparaydxlj68g9v4xv25fln6c7b-output.txt'
+
+exec cat result
+cmp stdout want.txt
+
+-- default.nix --
+let
+  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-24.05";
+  pkgs = import nixpkgs { config = {}; overlays = []; };
+in
+with pkgs;
+{
+  outputTxtDrv = stdenv.mkDerivation rec {
+    name = "output.txt";
+
+    # Disable unpackPhase etc
+    phases = "buildPhase";
+    builder = ./builder.sh;
+    nativeBuildInputs = [ coreutils jq which ];
+
+    # PATH setting
+    PATH = lib.makeBinPath nativeBuildInputs;
+
+    # Only strings can be passed to builder
+    someString = "hello";
+    someNumber = builtins.toString 42;
+    someJson = builtins.toJSON { dst = "world"; };
+  };
+}
+-- builder.sh --
+which jq > $out
+echo "$someString $(echo "$someJson" | jq -r '.dst') $someNumber" >> $out
+-- want.txt --
+/nix/store/pq5fps7h29bbic56997fr274hhsf5hlb-jq-1.7.1-bin/bin/jq
+hello world 42
